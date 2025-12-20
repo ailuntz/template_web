@@ -13,6 +13,7 @@ interface User {
 interface AuthState {
 	user: User | null;
 	token: string | null;
+	refreshToken: string | null;
 	loading: boolean;
 	initialized: boolean;
 }
@@ -23,6 +24,7 @@ function createAuthStore() {
 	const { subscribe, set, update } = writable<AuthState>({
 		user: null,
 		token: null,
+		refreshToken: null,
 		loading: true,
 		initialized: false,
 	});
@@ -37,26 +39,36 @@ function createAuthStore() {
 			}
 			update((state) => ({ ...state, user, loading: false }));
 		},
-		setToken: (token: string | null) => {
-			if (token) {
-				localStorage.setItem('access_token', token);
+		setToken: (accessToken: string | null, refreshToken: string | null) => {
+			if (accessToken) {
+				localStorage.setItem('access_token', accessToken);
 			} else {
 				localStorage.removeItem('access_token');
 			}
-			update((state) => ({ ...state, token }));
+
+			if (refreshToken) {
+				localStorage.setItem('refresh_token', refreshToken);
+			} else {
+				localStorage.removeItem('refresh_token');
+			}
+
+			update((state) => ({ ...state, token: accessToken, refreshToken }));
 		},
-		login: (user: User, token: string) => {
-			localStorage.setItem('access_token', token);
+		login: (user: User, accessToken: string, refreshToken: string) => {
+			localStorage.setItem('access_token', accessToken);
+			localStorage.setItem('refresh_token', refreshToken);
 			localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
-			set({ user, token, loading: false, initialized: true });
+			set({ user, token: accessToken, refreshToken, loading: false, initialized: true });
 		},
 		logout: () => {
 			localStorage.removeItem('access_token');
+			localStorage.removeItem('refresh_token');
 			localStorage.removeItem(USER_CACHE_KEY);
-			set({ user: null, token: null, loading: false, initialized: true });
+			set({ user: null, token: null, refreshToken: null, loading: false, initialized: true });
 		},
 		initialize: () => {
 			const token = localStorage.getItem('access_token');
+			const refreshToken = localStorage.getItem('refresh_token');
 			const cachedUser = localStorage.getItem(USER_CACHE_KEY);
 			let user: User | null = null;
 
@@ -71,6 +83,7 @@ function createAuthStore() {
 			update((state) => ({
 				...state,
 				token,
+				refreshToken,
 				user,
 				loading: !!token && !user,
 				initialized: true,

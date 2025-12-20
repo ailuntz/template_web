@@ -21,28 +21,87 @@ client.interceptors.request.use((request) => {
 	return request;
 });
 
-// 标记是否正在处理 401 跳转，防止重复跳转
+// Refresh token state management
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
 let isRedirectingToLogin = false;
 
-// Add response interceptor for error handling
-client.interceptors.response.use((response, request) => {
-	// 仅在浏览器环境处理 401
+function subscribeTokenRefresh(cb: (token: string) => void) {
+	refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token: string) {
+	refreshSubscribers.forEach((cb) => cb(token));
+	refreshSubscribers = [];
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+	const refreshToken = localStorage.getItem('refresh_token');
+	if (!refreshToken) return null;
+
+	try {
+		const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ refresh_token: refreshToken })
+		});
+
+		if (!response.ok) {
+			localStorage.removeItem('access_token');
+			localStorage.removeItem('refresh_token');
+			localStorage.removeItem('cached_user');
+			return null;
+		}
+
+		const data = await response.json();
+		localStorage.setItem('access_token', data.access_token);
+		localStorage.setItem('refresh_token', data.refresh_token);
+		return data.access_token;
+	} catch (error) {
+		console.error('Failed to refresh token:', error);
+		return null;
+	}
+}
+
+// Add response interceptor with automatic token refresh
+client.interceptors.response.use(async (response, request) => {
 	if (!browser) return response;
 
-	// 检查是否为 401 且不是认证相关的请求
-	const isAuthEndpoint = request.url.includes('/api/v1/auth/login') ||
-		request.url.includes('/api/v1/auth/register');
+	const isAuthEndpoint = request.url.includes('/api/v1/auth/');
 
-	if (response.status === 401 && !isAuthEndpoint && !isRedirectingToLogin) {
-		isRedirectingToLogin = true;
-		localStorage.removeItem('access_token');
-		localStorage.removeItem('user');
+	if (response.status === 401 && !isAuthEndpoint) {
+		if (!isRefreshing) {
+			isRefreshing = true;
+			const newToken = await refreshAccessToken();
+			isRefreshing = false;
 
-		// 使用 SvelteKit 的 goto 进行导航，避免页面刷新
-		goto('/auth/login').finally(() => {
-			isRedirectingToLogin = false;
-		});
+			if (newToken) {
+				// Refresh succeeded, notify all waiting requests
+				onRefreshed(newToken);
+
+				// Retry current request with new token
+				request.headers.set('Authorization', `Bearer ${newToken}`);
+				return client.request(request);
+			} else {
+				// Refresh failed, redirect to login
+				if (!isRedirectingToLogin) {
+					isRedirectingToLogin = true;
+					goto('/auth/login').finally(() => {
+						isRedirectingToLogin = false;
+					});
+				}
+			}
+		} else {
+			// Refreshing in progress, wait for it to complete
+			return new Promise((resolve) => {
+				subscribeTokenRefresh((newToken: string) => {
+					request.headers.set('Authorization', `Bearer ${newToken}`);
+					resolve(client.request(request));
+				});
+			});
+		}
 	}
+
 	return response;
 });
 

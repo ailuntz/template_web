@@ -64,21 +64,6 @@ function Button({ className, variant = 'primary', ...props }) {
 }
 ```
 
-## 配色系统集成
-
-**始终使用 Pastel 颜色**（参见 color.md 规则）：
-
-```typescript
-// ✅ 使用 Pastel 语义色
-<div className="bg-background text-text border border-border">
-
-// ✅ 使用 Pastel 应用色
-<button className="bg-primary text-white">
-
-// ✅ 交互元素的填充色
-<input className="bg-fill border border-border">
-```
-
 ## 响应式设计模式
 
 ```typescript
@@ -166,7 +151,6 @@ import { cn } from '~/lib/cn'
 
 1. **仅使用静态类名**：不要动态拼接 class
 2. **使用 cn()**：统一类名组合方式
-3. **优先 Pastel 颜色**：使用 Pastel 色彩体系替代默认 Tailwind 颜色
-4. **移动优先**：以移动端为基础，再逐步扩展断点
-5. **组件变体**：使用对象映射模式定义可复用变体
-6. **暗色模式**：样式设计时同时考虑暗色模式
+3. **移动优先**：以移动端为基础，再逐步扩展断点
+4. **组件变体**：使用对象映射模式定义可复用变体
+5. **暗色模式**：样式设计时同时考虑暗色模式

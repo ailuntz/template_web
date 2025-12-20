@@ -53,18 +53,19 @@ frontend/
 │   │   └── app.css              # Tailwind v4 入口 + 主题变量
 │   ├── lib/
 │   │   ├── api/                    # @hey-api/openapi-ts 生成
-│   │   │   ├── client.ts           # fetch 客户端 + 拦截器
+│   │   │   ├── client.ts           # fetch 客户端 + 拦截器（双 token 自动刷新）
 │   │   │   ├── index.ts            # 入口，导出生成的 SDK
 │   │   │   └── generated/          # 自动生成的类型和方法
 │   │   ├── stores/
-│   │   │   ├── auth.ts             # 用户认证状态
+│   │   │   ├── auth.ts             # 用户认证状态（双 token 管理）
 │   │   │   └── ui.ts               # 主题/语言/toast
 │   │   ├── schemas/                # Zod 校验 schema
 │   │   └── utils/
 │   │       ├── api.ts              # SDK 结果/错误处理
-│   │       ├── cn.ts
+│   │       ├── cn.ts               # clsx + tailwind-merge
 │   │       ├── format.ts
-│   │       └── storage.ts
+│   │       ├── storage.ts
+│   │       └── token-manager.ts    # 主动刷新 token（过期前 2 分钟）
 │   ├── components/
 │   │   ├── layout/
 │   │   │   ├── PublicHeader.svelte
@@ -135,33 +136,35 @@ backend/
 │   ├── main.py                     # FastAPI 入口
 │   ├── core/
 │   │   ├── __init__.py
-│   │   ├── config.py               # pydantic-settings 配置
+│   │   ├── config.py               # pydantic-settings 配置（JWT 60min/30day）
 │   │   ├── logging.py              # structlog 配置
 │   │   ├── rate_limit.py           # 速率限制
-│   │   └── security.py             # JWT/密码哈希
+│   │   └── security.py             # JWT 双 token/密码哈希/token family
 │   ├── api/
 │   │   ├── __init__.py
 │   │   ├── deps.py                 # 依赖注入（get_db/get_current_user）
 │   │   └── v1/
 │   │       ├── __init__.py
 │   │       ├── router.py           # 汇总所有路由
-│   │       ├── auth.py
+│   │       ├── auth.py             # 登录/注册/刷新/登出
 │   │       ├── todos.py
 │   │       ├── users.py
 │   │       └── health.py
 │   ├── models/
 │   │   ├── __init__.py
-│   │   ├── base.py                 # SQLAlchemy Base
+│   │   ├── base.py                 # SQLAlchemy Base + TimestampMixin
+│   │   ├── refresh_token.py        # Refresh Token（支持轮换/撤销）
 │   │   ├── todo.py
 │   │   └── user.py
 │   ├── schemas/
 │   │   ├── __init__.py
-│   │   ├── auth.py
+│   │   ├── auth.py                 # Token/RefreshTokenRequest
 │   │   ├── todo.py
 │   │   └── user.py
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── auth.py
+│   │   ├── auth.py                 # 登录/刷新逻辑
+│   │   ├── refresh_token.py        # Token CRUD/撤销/清理
 │   │   ├── todo.py
 │   │   └── user.py
 │   └── db/

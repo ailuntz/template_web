@@ -39,7 +39,7 @@ const { form, errors, data } = createForm<LoginInput>({
 			});
 
 			const data = unwrapOrThrow(result, '登录失败');
-			auth.setToken(data.access_token);
+			auth.setToken(data.access_token, data.refresh_token);
 
 			// Fetch user info
 			const userResult = await readCurrentUserApiV1UsersMeGet();
