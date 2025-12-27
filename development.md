@@ -1,3 +1,20 @@
+## 后端初始化
+conda create -n backend python=3.10 -y
+conda activate backend
+cd backend
+pip install -r requirements.txt
+cp .env.example .env
+alembic revision --autogenerate -m "Initial tables"
+alembic upgrade head
+python scripts/export_openapi.py
+cp openapi.json ../frontend/
+
+## 前端初始化
+cd frontend
+npm install
+npx playwright install chromium
+npm run generate-api
+
 ## 后端启动
 cd backend
 conda activate backend
@@ -6,21 +23,6 @@ uvicorn app.main:app --reload
 ## 前端启动
 cd frontend
 npm run dev
-
-# 后端初始化
-conda create -n backend python=3.10 -y
-conda activate backend
-cd backend
-pip install -r requirements.txt
-cp .env.example .env
-alembic revision --autogenerate -m "Initial tables"
-alembic upgrade head
-
-# 前端初始化
-cd frontend
-npm install
-npx playwright install chromium
-npm run generate-api
 
 # 检查和测试
 npm run check #前端类型检查
