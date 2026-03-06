@@ -18,6 +18,13 @@ export type HTTPValidationError = {
 };
 
 /**
+ * Refresh token request schema.
+ */
+export type RefreshTokenRequest = {
+    refresh_token: string;
+};
+
+/**
  * Schema for creating a todo.
  */
 export type TodoCreate = {
@@ -66,7 +73,9 @@ export type TodoUpdate = {
  */
 export type Token = {
     access_token: string;
+    refresh_token: string;
     token_type?: string;
+    expires_in?: (number | null);
 };
 
 /**
@@ -76,6 +85,7 @@ export type UserCreate = {
     email: string;
     full_name?: (string | null);
     avatar?: (string | null);
+    institution_code: string;
     password: string;
 };
 
@@ -127,6 +137,30 @@ export type LoginForAccessTokenApiV1AuthLoginPostData = {
 export type LoginForAccessTokenApiV1AuthLoginPostResponse = (Token);
 
 export type LoginForAccessTokenApiV1AuthLoginPostError = (HTTPValidationError);
+
+export type RefreshTokenApiV1AuthRefreshPostData = {
+    body: RefreshTokenRequest;
+};
+
+export type RefreshTokenApiV1AuthRefreshPostResponse = (Token);
+
+export type RefreshTokenApiV1AuthRefreshPostError = (HTTPValidationError);
+
+export type LogoutApiV1AuthLogoutPostData = {
+    body: RefreshTokenRequest;
+};
+
+export type LogoutApiV1AuthLogoutPostResponse = ({
+    [key: string]: unknown;
+});
+
+export type LogoutApiV1AuthLogoutPostError = (HTTPValidationError);
+
+export type LogoutAllDevicesApiV1AuthLogoutAllPostResponse = ({
+    [key: string]: unknown;
+});
+
+export type LogoutAllDevicesApiV1AuthLogoutAllPostError = unknown;
 
 export type RegisterApiV1AuthRegisterPostData = {
     body: UserCreate;

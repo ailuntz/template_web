@@ -7,11 +7,13 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.api.deps import get_db
+from app.core.config import settings
 from app.main import app
 from app.models import Base
 
 # Use SQLite for testing
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+TEST_REGISTRATION_INSTITUTION_CODE = "782954"
 
 
 @pytest.fixture(scope="session")
@@ -57,3 +59,12 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield client
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def registration_institution_code() -> Generator[None, None, None]:
+    """Ensure registration is enabled during tests."""
+    original = settings.registration_institution_code
+    settings.registration_institution_code = TEST_REGISTRATION_INSTITUTION_CODE
+    yield
+    settings.registration_institution_code = original

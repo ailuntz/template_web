@@ -1,28 +1,34 @@
-## 后端初始化
+## 创建环境 （已存在则可省略）
 conda create -n backend python=3.10 -y
 conda activate backend
 cd backend
 pip install -r requirements.txt
-cp .env.example .env
-alembic revision --autogenerate -m "Initial tables"
-alembic upgrade head
-python scripts/export_openapi.py
-cp openapi.json ../frontend/
+
+## 后端初始化
+cp .env.example .env #修改数据库信息
+alembic upgrade head #新数据库则先升级数据库
+python scripts/seed.py
 
 ## 前端初始化
 cd frontend
+cp .env.example .env  #修改VITE_API_URL
 npm install
 npx playwright install chromium
-npm run generate-api
 
 ## 后端启动
 cd backend
 conda activate backend
 uvicorn app.main:app --reload
-
 ## 前端启动
 cd frontend
 npm run dev
+
+## 增量更新后
+alembic revision --autogenerate -m "New migration"  #如果修改了模型，再生成新的迁移
+alembic upgrade head #再升级数据库
+python scripts/export_openapi.py
+cp openapi.json ../frontend/
+npm run generate-api
 
 # 检查和测试
 npm run check #前端类型检查

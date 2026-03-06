@@ -11,6 +11,7 @@ test.describe('Authentication', () => {
 	test('should display register page', async ({ page }) => {
 		await page.goto('/auth/register');
 		await expect(page.getByRole('heading', { name: '创建账号' })).toBeVisible();
+		await expect(page.getByLabel('机构验证码')).toBeVisible();
 		await expect(page.getByLabel('邮箱')).toBeVisible();
 		await expect(page.getByLabel('密码', { exact: true })).toBeVisible();
 		await expect(page.getByLabel('确认密码')).toBeVisible();

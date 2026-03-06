@@ -25,15 +25,28 @@ def validate_password_strength(password: str) -> str:
     return password
 
 
+def validate_institution_code(value: str) -> str:
+    """验证机构注册码。"""
+    if not re.fullmatch(r"\d{6}", value):
+        raise ValueError("机构验证码必须为 6 位数字")
+    return value
+
+
 class UserCreate(UserBase):
     """Schema for creating a user."""
 
+    institution_code: str = Field(min_length=6, max_length=6)
     password: str = Field(min_length=8, max_length=128)
 
     @field_validator("password")
     @classmethod
     def password_strength(cls, v: str) -> str:
         return validate_password_strength(v)
+
+    @field_validator("institution_code")
+    @classmethod
+    def institution_code_format(cls, v: str) -> str:
+        return validate_institution_code(v)
 
 
 class UserUpdate(BaseModel):

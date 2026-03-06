@@ -1,3 +1,6 @@
+import re
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,11 +25,23 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 60
     jwt_refresh_token_expire_days: int = 30
 
+    # Registration
+    registration_institution_code: str | None = None
+
     # Sentry
     sentry_dsn: str | None = None
 
     # CORS
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+
+    @field_validator("registration_institution_code")
+    @classmethod
+    def validate_registration_institution_code(cls, value: str | None) -> str | None:
+        if value in (None, ""):
+            return None
+        if not re.fullmatch(r"\d{6}", value):
+            raise ValueError("REGISTRATION_INSTITUTION_CODE must be exactly 6 digits")
+        return value
 
 
 settings = Settings()

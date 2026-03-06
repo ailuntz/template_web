@@ -1,13 +1,19 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.conftest import TEST_REGISTRATION_INSTITUTION_CODE
+
 
 async def get_auth_token(client: AsyncClient, email: str, password: str) -> str:
     """Helper to register and login a user, returning the access token."""
     # Register
     await client.post(
         "/api/v1/auth/register",
-        json={"email": email, "password": password},
+        json={
+            "email": email,
+            "password": password,
+            "institution_code": TEST_REGISTRATION_INSTITUTION_CODE,
+        },
     )
     # Login
     response = await client.post(

@@ -35,6 +35,15 @@ function onRefreshed(token: string) {
 	refreshSubscribers = [];
 }
 
+function cloneRequestWithToken(request: Request, token: string) {
+	const headers = new Headers(request.headers);
+	headers.set('Authorization', `Bearer ${token}`);
+
+	return new Request(request, {
+		headers,
+	});
+}
+
 async function refreshAccessToken(): Promise<string | null> {
 	const refreshToken = localStorage.getItem('refresh_token');
 	if (!refreshToken) return null;
@@ -80,8 +89,7 @@ client.interceptors.response.use(async (response, request) => {
 				onRefreshed(newToken);
 
 				// Retry current request with new token
-				request.headers.set('Authorization', `Bearer ${newToken}`);
-				return client.request(request);
+				return fetch(cloneRequestWithToken(request, newToken));
 			} else {
 				// Refresh failed, redirect to login
 				if (!isRedirectingToLogin) {
@@ -93,10 +101,9 @@ client.interceptors.response.use(async (response, request) => {
 			}
 		} else {
 			// Refreshing in progress, wait for it to complete
-			return new Promise((resolve) => {
+			return new Promise<Response>((resolve) => {
 				subscribeTokenRefresh((newToken: string) => {
-					request.headers.set('Authorization', `Bearer ${newToken}`);
-					resolve(client.request(request));
+					resolve(fetch(cloneRequestWithToken(request, newToken)));
 				});
 			});
 		}

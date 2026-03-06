@@ -1,6 +1,8 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.conftest import TEST_REGISTRATION_INSTITUTION_CODE
+
 
 @pytest.mark.asyncio
 async def test_register_user(client: AsyncClient) -> None:
@@ -11,6 +13,7 @@ async def test_register_user(client: AsyncClient) -> None:
             "email": "newuser@example.com",
             "password": "password123",
             "full_name": "New User",
+            "institution_code": TEST_REGISTRATION_INSTITUTION_CODE,
         },
     )
     assert response.status_code == 201
@@ -29,6 +32,7 @@ async def test_register_duplicate_email(client: AsyncClient) -> None:
         json={
             "email": "duplicate@example.com",
             "password": "password123",
+            "institution_code": TEST_REGISTRATION_INSTITUTION_CODE,
         },
     )
 
@@ -38,9 +42,25 @@ async def test_register_duplicate_email(client: AsyncClient) -> None:
         json={
             "email": "duplicate@example.com",
             "password": "password456",
+            "institution_code": TEST_REGISTRATION_INSTITUTION_CODE,
         },
     )
     assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_register_rejects_invalid_institution_code(client: AsyncClient) -> None:
+    """Test registration with an invalid institution code."""
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "invalid-code@example.com",
+            "password": "password123",
+            "institution_code": "123123",
+        },
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Invalid institution code"
 
 
 @pytest.mark.asyncio
@@ -52,6 +72,7 @@ async def test_login_success(client: AsyncClient) -> None:
         json={
             "email": "logintest@example.com",
             "password": "password123",
+            "institution_code": TEST_REGISTRATION_INSTITUTION_CODE,
         },
     )
 

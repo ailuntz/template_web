@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user, get_db
+from app.core.config import settings
 from app.core.rate_limit import auth_rate_limiter
 from app.models.user import User
 from app.schemas.auth import RefreshTokenRequest, Token
@@ -98,6 +99,18 @@ async def register(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> UserResponse:
     """Register a new user."""
+    if not settings.registration_institution_code:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Registration is not configured",
+        )
+
+    if user_in.institution_code != settings.registration_institution_code:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid institution code",
+        )
+
     existing_user = await get_user_by_email(db, user_in.email)
     if existing_user:
         raise HTTPException(

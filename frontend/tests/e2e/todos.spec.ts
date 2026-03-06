@@ -1,11 +1,17 @@
 import { expect, test } from '@playwright/test';
 
+const TEST_REGISTRATION_INSTITUTION_CODE = '782954';
+
 test.describe('Todos', () => {
 	// Helper to create user via API and login via UI
 	async function loginUser(page: any, email: string, password: string) {
 		// Register via API directly (bypass frontend form issues)
 		await page.request.post('http://localhost:8000/api/v1/auth/register', {
-			data: { email, password },
+			data: {
+				email,
+				password,
+				institution_code: TEST_REGISTRATION_INSTITUTION_CODE,
+			},
 		});
 
 		// Login via UI

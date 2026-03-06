@@ -99,6 +99,126 @@
         }
       }
     },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh Token",
+        "description": "Refresh access token using refresh token.",
+        "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "description": "Logout by revoking the refresh token.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Logout Api V1 Auth Logout Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout All Devices",
+        "description": "Logout from all devices by revoking all refresh tokens.",
+        "operationId": "logout_all_devices_api_v1_auth_logout_all_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Logout All Devices Api V1 Auth Logout All Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
@@ -745,16 +865,33 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest",
+        "description": "Refresh token request schema."
+      },
       "TodoCreate": {
         "properties": {
           "title": {
             "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
             "title": "Title"
           },
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 2000
               },
               {
                 "type": "null"
@@ -764,6 +901,8 @@
           },
           "priority": {
             "type": "integer",
+            "maximum": 2.0,
+            "minimum": 0.0,
             "title": "Priority",
             "default": 0
           }
@@ -816,12 +955,15 @@
         "properties": {
           "title": {
             "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
             "title": "Title"
           },
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 2000
               },
               {
                 "type": "null"
@@ -831,6 +973,8 @@
           },
           "priority": {
             "type": "integer",
+            "maximum": 2.0,
+            "minimum": 0.0,
             "title": "Priority",
             "default": 0
           },
@@ -874,7 +1018,9 @@
           "title": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -885,7 +1031,8 @@
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 2000
               },
               {
                 "type": "null"
@@ -907,7 +1054,9 @@
           "priority": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "maximum": 2.0,
+                "minimum": 0.0
               },
               {
                 "type": "null"
@@ -926,15 +1075,31 @@
             "type": "string",
             "title": "Access Token"
           },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
           "token_type": {
             "type": "string",
             "title": "Token Type",
             "default": "bearer"
+          },
+          "expires_in": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires In"
           }
         },
         "type": "object",
         "required": [
-          "access_token"
+          "access_token",
+          "refresh_token"
         ],
         "title": "Token",
         "description": "Token response schema."
@@ -949,7 +1114,8 @@
           "full_name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 100
               },
               {
                 "type": "null"
@@ -968,14 +1134,23 @@
             ],
             "title": "Avatar"
           },
+          "institution_code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "title": "Institution Code"
+          },
           "password": {
             "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
             "title": "Password"
           }
         },
         "type": "object",
         "required": [
           "email",
+          "institution_code",
           "password"
         ],
         "title": "UserCreate",
@@ -991,7 +1166,8 @@
           "full_name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 100
               },
               {
                 "type": "null"
@@ -1057,7 +1233,8 @@
           "full_name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 100
               },
               {
                 "type": "null"
@@ -1079,7 +1256,9 @@
           "password": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 8
               },
               {
                 "type": "null"

@@ -30,6 +30,7 @@ const { form, errors } = createForm<RegisterInput>({
 			const result = await registerApiV1AuthRegisterPost({
 				body: {
 					email: values.email,
+					institution_code: values.institution_code,
 					password: values.password,
 					full_name: values.full_name,
 				},
@@ -52,6 +53,20 @@ const { form, errors } = createForm<RegisterInput>({
 </script>
 
 <form use:form class="space-y-4">
+	<FormField>
+		<FormLabel for="institution_code">机构验证码</FormLabel>
+		<Input
+			id="institution_code"
+			name="institution_code"
+			type="text"
+			placeholder="请输入 6 位数字"
+			autocomplete="one-time-code"
+			inputmode="numeric"
+			maxlength={6}
+		/>
+		<FormMessage error={$errors.institution_code ?? undefined} />
+	</FormField>
+
 	<FormField>
 		<FormLabel for="email">邮箱</FormLabel>
 		<Input
@@ -82,7 +97,7 @@ const { form, errors } = createForm<RegisterInput>({
 			id="password"
 			name="password"
 			type="password"
-			placeholder="至少6个字符"
+			placeholder="至少8个字符，含字母和数字"
 			autocomplete="new-password"
 		/>
 		<FormMessage error={$errors.password ?? undefined} />
